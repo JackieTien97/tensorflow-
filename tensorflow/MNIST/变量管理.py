@@ -28,22 +28,7 @@ MOVING_AVERAGE_DECAY = 0.99
 # 一个辅助函数，给定一个神经网络的输入和所有参数，计算神经网络的前向传播结果。在这里定义了一个使用ReLU激活函数的三层全链接神经网络。
 # 通过加入隐藏层实现了多层网络结构，通过ReLU激活函数实现了去线形化。
 # 在这个函数中也支持传入用于计算参数平均值的类，这样方便在测试时使用滑动平均模型
-def inference(input_tensor, avg_class, weights1, biases1, weights2, biases2):
-    # 当没有提供滑动平均类时，直接使用参数当前的取值
-    if avg_class is None:
-        # 计算隐藏层的前向传播结果，这里使用了ReLU激活函数
-        layer1 = tf.nn.relu(tf.matmul(input_tensor, weights1) + biases1)
-        # 计算输出层的前向传播结果。因为在计算损失函数时会一并计算softmax函数，所以这里不需要加入激活函数。
-        # 而且不加入softmax函数不会影响预测结果。因为预测时使用的是不同类别对应节点s输出值的相对大小，有没有softmax层
-        # 对最后分类结果的计算没有影响。于是在计算整个神经网络的前向传播时可以不加入最后的softmax层
-        return tf.matmul(layer1, weights2) + biases2
-    else:
-        # 首先使用avg_class.average()来计算得出变量的滑动平均值，然后再计算相应的神经网络前向传播结果
-        layer1 = tf.nn.relu(tf.matmul(input_tensor, avg_class.average(weights1)) + avg_class.average(biases1))
-        return tf.matmul(layer1, avg_class.average(weights2)) + avg_class.average(biases2)
-
-
-def inference1(input_tensor, avg_class, reuse=False):
+def inference(input_tensor, avg_class, reuse=False):
     # 当没有提供滑动平均类时，直接使用参数当前的取值
     if avg_class is None:
         # 计算隐藏层的前向传播结果，这里使用了ReLU激活函数
@@ -84,7 +69,7 @@ def train(mnist):
     biases2 = tf.Variable(tf.constant(0.1, shape=[OUTPUT_NODE]))
 
     # 计算在当前参数下，神经网络前向传播的结果。这里给出的用于计算滑动平均的类为None，所以函数不会使用参数的滑动平均值
-    y = inference1(x, None)
+    y = inference(x, None)
 
     # 定义存储训练轮数的变量。这个变量不需要计算滑动平均值，所以这里指定这个变量为不可训练变量。
     # 在使用Tensorflow训练神经网络时，一般会将代表训练轮数的变量指定为不可训练的参数
@@ -98,7 +83,7 @@ def train(mnist):
 
     # 计算使用了滑动平均之后的前向传播结果。滑动平均不会改变变量本身的取值，而是会维护一个影子变量，来记录其滑动平均值。
     # 所以当需要使用这个滑动平均值时，需要明确调用average函数
-    average_y = inference1(x, variable_averages, True)
+    average_y = inference(x, variable_averages, True)
 
     # 计算交叉熵z作为刻画预测值和真实值之间差距的损失函数。
     # 当分类问题中只有一个正确答案时，可以使用这个函数来加速交叉熵的计算
