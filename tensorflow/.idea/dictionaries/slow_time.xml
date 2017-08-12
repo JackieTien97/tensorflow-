@@ -2,8 +2,11 @@
   <dictionary name="slow_time">
     <words>
       <w>ckpt</w>
+      <w>conv</w>
+      <w>logit</w>
       <w>mnist</w>
       <w>regularizer</w>
+      <w>relu</w>
       <w>softmax</w>
       <w>tensorflow</w>
     </words>
